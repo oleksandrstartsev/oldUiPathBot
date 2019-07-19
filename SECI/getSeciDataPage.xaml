@@ -1,0 +1,1342 @@
+﻿<Activity mc:Ignorable="sap sap2010 sads" x:Class="getSeciDataPage"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:mva="clr-namespace:Microsoft.VisualBasic.Activities;assembly=System.Activities"
+ xmlns:s="clr-namespace:System;assembly=mscorlib"
+ xmlns:sads="http://schemas.microsoft.com/netfx/2010/xaml/activities/debugger"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=mscorlib"
+ xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_filters_r" Type="InArgument(x:String)" />
+    <x:Property Name="in_filters_y" Type="InArgument(x:String)" />
+    <x:Property Name="in_filters_m" Type="InArgument(x:String)" />
+    <x:Property Name="out_SystemError" Type="OutArgument(s:Exception)" />
+    <x:Property Name="in_Config" Type="InArgument(scg:Dictionary(x:String, x:Object))" />
+    <x:Property Name="in_DB_CONNECTION_local" Type="InArgument(ui:DatabaseConnection)" />
+  </x:Members>
+  <mva:VisualBasic.Settings>
+    <x:Null />
+  </mva:VisualBasic.Settings>
+  <sap2010:WorkflowViewState.IdRef>test_3_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <sco:Collection x:TypeArguments="x:String">
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.Drawing</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Net.Mail</x:String>
+      <x:String>System.Xml</x:String>
+      <x:String>System.Xml.Linq</x:String>
+      <x:String>System.Windows.Markup</x:String>
+      <x:String>UiPath.Core</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Xml.Serialization</x:String>
+      <x:String>System.Reflection</x:String>
+      <x:String>UiPath.Database</x:String>
+    </sco:Collection>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <sco:Collection x:TypeArguments="AssemblyReference">
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>System.Data</AssemblyReference>
+      <AssemblyReference>System.Data.DataSetExtensions</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Drawing</AssemblyReference>
+      <AssemblyReference>System.Core</AssemblyReference>
+      <AssemblyReference>System.Xml</AssemblyReference>
+      <AssemblyReference>System.Xml.Linq</AssemblyReference>
+      <AssemblyReference>PresentationFramework</AssemblyReference>
+      <AssemblyReference>WindowsBase</AssemblyReference>
+      <AssemblyReference>PresentationCore</AssemblyReference>
+      <AssemblyReference>System.Xaml</AssemblyReference>
+      <AssemblyReference>UiPath.UiAutomation.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>System.ServiceModel</AssemblyReference>
+      <AssemblyReference>UiPath.Excel</AssemblyReference>
+      <AssemblyReference>UiPath.Mail</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualStudio.Services.Common</AssemblyReference>
+      <AssemblyReference>System.Collections.Immutable</AssemblyReference>
+      <AssemblyReference>System.ValueTuple</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.Composition</AssemblyReference>
+      <AssemblyReference>UiPath.Studio.Plugin.Workflow</AssemblyReference>
+      <AssemblyReference>System.Reflection.Metadata</AssemblyReference>
+      <AssemblyReference>UiPath.Database</AssemblyReference>
+    </sco:Collection>
+  </TextExpression.ReferencesForImplementation>
+  <Flowchart sap2010:Annotation.AnnotationText="Data Scraping of the SECI registry is performed here. &#xA;The multiple page scraping is controlled using a page counter.&#xA;The maximum number of pages maxnbPage is obtained after the scraping of the first page, bacause the non-filtered ExtractDataTable contains an artifact with the numbers of page numbers.&#xA;ExtractDataTable contains the data scraped from a table, dataTableClean aggregates the data.&#xA;Preconditions:&#xA; - load Transaction from Orchestrator&#xA; - IE is opened on a web-page of the SECI registry.&#xA;Postconditions:&#xA; - scrape data from the SECI registry for a signle filter condition&#xA; - scraped data is stored to the database/ Excel document." DisplayName="getSeciDataPage" sap2010:WorkflowViewState.IdRef="Flowchart_1">
+    <Flowchart.Variables>
+      <Variable x:TypeArguments="x:String" Default="Data\seci.xlsx" Name="filepath_registry_SECI_Excel" />
+      <Variable x:TypeArguments="x:String" Default="https://dabi.gov.ua/declarate/list.php" Name="local_browser_url" />
+      <Variable x:TypeArguments="s:Exception" Default="[Nothing]" Name="ErrorOccured" />
+      <Variable x:TypeArguments="sd:DataTable" Default="[New System.Data.DataTable]" Name="ExtractDataTable" />
+      <Variable x:TypeArguments="sd:DataTable" Default="[New System.Data.DataTable]" Name="dataTableClean" />
+      <Variable x:TypeArguments="x:Int32" Default="0" Name="counter" />
+      <Variable x:TypeArguments="x:Int32" Default="0" Name="maxnbPage" />
+      <Variable x:TypeArguments="x:Boolean" Default="False" Name="keyCheckpoint" />
+      <Variable x:TypeArguments="x:Boolean" Default="False" Name="keyBooleanPages" />
+      <Variable x:TypeArguments="x:String" Name="varText" />
+    </Flowchart.Variables>
+    <Flowchart.StartNode>
+      <FlowStep x:Name="__ReferenceID4" sap2010:WorkflowViewState.IdRef="FlowStep_7">
+        <Sequence sap2010:Annotation.AnnotationText="This sequence  applies the necessary filters to the webpage of SECI.&#xA;Precondition: filters:: region, year, month&#xA;Postcondion: necessary webpage is available for further scraping" DisplayName="Apply filters to webpage" sap2010:WorkflowViewState.IdRef="Sequence_79">
+          <ui:BrowserScope Browser="{x:Null}" SearchScope="{x:Null}" TimeoutMS="{x:Null}" UiBrowser="{x:Null}" BrowserType="IE" DisplayName="Attach Browser 'iexplore.exe Перегляд'" sap2010:WorkflowViewState.IdRef="BrowserScope_1" InformativeScreenshot="75847e634a2fc3ae1a33bc350a0ea2b5" Selector="&lt;html title='Перегляд документів' /&gt;">
+            <ui:BrowserScope.Body>
+              <ActivityAction x:TypeArguments="x:Object">
+                <ActivityAction.Argument>
+                  <DelegateInArgument x:TypeArguments="x:Object" Name="ContextTarget" />
+                </ActivityAction.Argument>
+                <Sequence DisplayName="Do" sap2010:WorkflowViewState.IdRef="Sequence_78">
+                  <Sequence.Variables>
+                    <Variable x:TypeArguments="ui:GenericValue" Name="newFilter" />
+                  </Sequence.Variables>
+                  <ui:SelectItem ContinueOnError="{x:Null}" DelayAfter="{x:Null}" DelayBefore="{x:Null}" DisplayName="Select Item 'SELECT'" sap2010:WorkflowViewState.IdRef="SelectItem_1" Item="[in_filters_r]">
+                    <ui:SelectItem.Items>
+                      <scg:List x:TypeArguments="x:String" Capacity="32">
+                        <x:String>ДАБІ</x:String>
+                        <x:String>АР Крим</x:String>
+                        <x:String>Вінницька</x:String>
+                        <x:String>Волинська</x:String>
+                        <x:String>Дніпропетровська</x:String>
+                        <x:String>Донецька</x:String>
+                        <x:String>Житомирська</x:String>
+                        <x:String>Закарпатська</x:String>
+                        <x:String>Запорізька</x:String>
+                        <x:String>Івано-Франківська</x:String>
+                        <x:String>Київська</x:String>
+                        <x:String>Кіровоградська</x:String>
+                        <x:String>Луганська</x:String>
+                        <x:String>Львівська</x:String>
+                        <x:String>Миколаївська</x:String>
+                        <x:String>Одеська</x:String>
+                        <x:String>Полтавська</x:String>
+                        <x:String>Рівненська</x:String>
+                        <x:String>Сумська</x:String>
+                        <x:String>Тернопільська</x:String>
+                        <x:String>Харківська</x:String>
+                        <x:String>Херсонська</x:String>
+                        <x:String>Хмельницька</x:String>
+                        <x:String>Черкаська</x:String>
+                        <x:String>Чернівецька</x:String>
+                        <x:String>Чернігівська</x:String>
+                        <x:String>м.Київ</x:String>
+                        <x:String>м.Севастополь</x:String>
+                      </scg:List>
+                    </ui:SelectItem.Items>
+                    <ui:SelectItem.Target>
+                      <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="cc5101929fd3edd1a1fef8f16bd9d9f1" Selector="&lt;webctrl name='filter[regob]' tag='SELECT' /&gt;" WaitForReady="INTERACTIVE" />
+                    </ui:SelectItem.Target>
+                  </ui:SelectItem>
+                  <ui:SelectItem ContinueOnError="{x:Null}" DelayAfter="{x:Null}" DelayBefore="{x:Null}" DisplayName="Select Item 'SELECT'" sap2010:WorkflowViewState.IdRef="SelectItem_2" Item="[in_filters_y]">
+                    <ui:SelectItem.Items>
+                      <scg:List x:TypeArguments="x:String" Capacity="16">
+                        <x:String>2010</x:String>
+                        <x:String>2011</x:String>
+                        <x:String>2012</x:String>
+                        <x:String>2013</x:String>
+                        <x:String>2014</x:String>
+                        <x:String>2015</x:String>
+                        <x:String>2016</x:String>
+                        <x:String>2017</x:String>
+                        <x:String>2018</x:String>
+                        <x:String>2019</x:String>
+                      </scg:List>
+                    </ui:SelectItem.Items>
+                    <ui:SelectItem.Target>
+                      <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="9e6ad36989e43227a64c57524cb94c42" Selector="&lt;webctrl name='filter[date]' tag='SELECT' /&gt;" WaitForReady="INTERACTIVE" />
+                    </ui:SelectItem.Target>
+                  </ui:SelectItem>
+                  <ui:SelectItem ContinueOnError="{x:Null}" DelayAfter="{x:Null}" DelayBefore="{x:Null}" DisplayName="Select Item 'SELECT'" sap2010:WorkflowViewState.IdRef="SelectItem_3" Item="[in_filters_m]">
+                    <ui:SelectItem.Items>
+                      <scg:List x:TypeArguments="x:String" Capacity="16">
+                        <x:String>січень</x:String>
+                        <x:String>лютий</x:String>
+                        <x:String>березень</x:String>
+                        <x:String>квітень</x:String>
+                        <x:String>травень</x:String>
+                        <x:String>червень</x:String>
+                        <x:String>липень</x:String>
+                        <x:String>серпень</x:String>
+                        <x:String>вересень</x:String>
+                        <x:String>жовтень</x:String>
+                        <x:String>листопад</x:String>
+                        <x:String>грудень</x:String>
+                      </scg:List>
+                    </ui:SelectItem.Items>
+                    <ui:SelectItem.Target>
+                      <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="a69efb3ca169c14476cdba294af4eefb" Selector="&lt;webctrl name='filter[date2]' tag='SELECT' /&gt;" WaitForReady="INTERACTIVE" />
+                    </ui:SelectItem.Target>
+                  </ui:SelectItem>
+                  <ui:Click DelayBefore="{x:Null}" DelayMS="{x:Null}" ClickType="CLICK_SINGLE" DisplayName="Click 'INPUT'" sap2010:WorkflowViewState.IdRef="Click_1" KeyModifiers="None" MouseButton="BTN_LEFT" SendWindowMessages="False" SimulateClick="True">
+                    <ui:Click.CursorPosition>
+                      <ui:CursorPosition Position="Center">
+                        <ui:CursorPosition.OffsetX>
+                          <InArgument x:TypeArguments="x:Int32" />
+                        </ui:CursorPosition.OffsetX>
+                        <ui:CursorPosition.OffsetY>
+                          <InArgument x:TypeArguments="x:Int32" />
+                        </ui:CursorPosition.OffsetY>
+                      </ui:CursorPosition>
+                    </ui:Click.CursorPosition>
+                    <ui:Click.Target>
+                      <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="ccb9ddc186124a728e0ce8ac6281348c" Selector="&lt;webctrl aaname='фільтр' tag='INPUT' type='submit' /&gt;" WaitForReady="INTERACTIVE" />
+                    </ui:Click.Target>
+                  </ui:Click>
+                  <ui:CommentOut DisplayName="Comment Out">
+                    <ui:CommentOut.Body>
+                      <Sequence DisplayName="Ignored Activities">
+                        <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_9" Level="Trace" Message="Delay for filtered page..." />
+                        <sap2010:WorkflowViewState.IdRef>Sequence_151</sap2010:WorkflowViewState.IdRef>
+                      </Sequence>
+                    </ui:CommentOut.Body>
+                    <sap2010:WorkflowViewState.IdRef>CommentOut_10</sap2010:WorkflowViewState.IdRef>
+                  </ui:CommentOut>
+                  <ui:CommentOut DisplayName="Comment Out">
+                    <ui:CommentOut.Body>
+                      <Sequence DisplayName="Ignored Activities">
+                        <Delay Duration="00:00:02" sap2010:WorkflowViewState.IdRef="Delay_1" />
+                        <sap2010:WorkflowViewState.IdRef>Sequence_152</sap2010:WorkflowViewState.IdRef>
+                      </Sequence>
+                    </ui:CommentOut.Body>
+                    <sap2010:WorkflowViewState.IdRef>CommentOut_11</sap2010:WorkflowViewState.IdRef>
+                  </ui:CommentOut>
+                </Sequence>
+              </ActivityAction>
+            </ui:BrowserScope.Body>
+          </ui:BrowserScope>
+        </Sequence>
+        <FlowStep.Next>
+          <FlowStep x:Name="__ReferenceID8" sap2010:WorkflowViewState.IdRef="FlowStep_15">
+            <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_33" Level="Trace" Message="processing page = 1" />
+            <FlowStep.Next>
+              <FlowStep x:Name="__ReferenceID9" sap2010:WorkflowViewState.IdRef="FlowStep_16">
+                <ui:ClearDataTable DataTable="[ExtractDataTable]" DisplayName="Clear Data Table" sap2010:WorkflowViewState.IdRef="ClearDataTable_9" />
+                <FlowStep.Next>
+                  <FlowStep x:Name="__ReferenceID10" sap2010:WorkflowViewState.IdRef="FlowStep_23">
+                    <Sequence sap2010:Annotation.AnnotationText="Verify, if scraped data is not empty, otherwise take action to skip processing." DisplayName="Sequence-check empty" sap2010:WorkflowViewState.IdRef="Sequence_124">
+                      <ui:BrowserScope Browser="{x:Null}" SearchScope="{x:Null}" TimeoutMS="{x:Null}" UiBrowser="{x:Null}" BrowserType="IE" DisplayName="Attach Browser - Scrape data" sap2010:WorkflowViewState.IdRef="BrowserScope_8" InformativeScreenshot="2386e2246bb3281b6ff8402ef0dbb5a8" Selector="&lt;html title='Перегляд документів' /&gt;">
+                        <ui:BrowserScope.Body>
+                          <ActivityAction x:TypeArguments="x:Object">
+                            <ActivityAction.Argument>
+                              <DelegateInArgument x:TypeArguments="x:Object" Name="ContextTarget" />
+                            </ActivityAction.Argument>
+                            <Sequence DisplayName="Do" sap2010:WorkflowViewState.IdRef="Sequence_143">
+                              <Sequence.Variables>
+                                <Variable x:TypeArguments="x:String" Name="text" />
+                              </Sequence.Variables>
+                              <ui:UiElementExists DisplayName="Element Exists 'B'" Exists="[keyCheckpoint]" sap2010:WorkflowViewState.IdRef="UiElementExists_10">
+                                <ui:UiElementExists.Target>
+                                  <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" InformativeScreenshot="7dcdf1fbec476dcedecd1e95585580cc" Selector="&lt;webctrl idx='2' tag='B' /&gt;" TimeoutMS="3000" WaitForReady="INTERACTIVE" />
+                                </ui:UiElementExists.Target>
+                              </ui:UiElementExists>
+                            </Sequence>
+                          </ActivityAction>
+                        </ui:BrowserScope.Body>
+                      </ui:BrowserScope>
+                      <ui:CommentOut DisplayName="Comment Out" sap2010:WorkflowViewState.IdRef="CommentOut_9">
+                        <ui:CommentOut.Body>
+                          <Sequence DisplayName="Ignored Activities" sap2010:WorkflowViewState.IdRef="Sequence_150">
+                            <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_34" Level="Warn" Message="[&quot;Кість док  = &quot;+ keyCheckpoint.ToString]" />
+                          </Sequence>
+                        </ui:CommentOut.Body>
+                      </ui:CommentOut>
+                      <If Condition="[keyCheckpoint]" sap2010:WorkflowViewState.IdRef="If_17">
+                        <If.Then>
+                          <Sequence sap2010:WorkflowViewState.IdRef="Sequence_149">
+                            <ui:BrowserScope Browser="{x:Null}" SearchScope="{x:Null}" TimeoutMS="{x:Null}" UiBrowser="{x:Null}" BrowserType="IE" DisplayName="Attach Browser - Scrape data" sap2010:WorkflowViewState.IdRef="BrowserScope_10" InformativeScreenshot="2386e2246bb3281b6ff8402ef0dbb5a8" Selector="&lt;html title='Перегляд документів' /&gt;">
+                              <ui:BrowserScope.Body>
+                                <ActivityAction x:TypeArguments="x:Object">
+                                  <ActivityAction.Argument>
+                                    <DelegateInArgument x:TypeArguments="x:Object" Name="ContextTarget" />
+                                  </ActivityAction.Argument>
+                                  <Sequence DisplayName="Do" sap2010:WorkflowViewState.IdRef="Sequence_148">
+                                    <Sequence.Variables>
+                                      <Variable x:TypeArguments="x:String" Name="text" />
+                                    </Sequence.Variables>
+                                    <ui:ExtractData NextLinkSelector="{x:Null}" ContinueOnError="True" DataTable="[ExtractDataTable]" DelayBetweenPagesMS="100" DisplayName="Extract Structured Data 'TBODY'" ExtractMetadata="&lt;extract&gt;&lt;row exact='3'&gt;&lt;webctrl tag='tr' /&gt;&lt;/row&gt;&lt;column name='№' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='1' /&gt;&lt;/column&gt;&lt;column name='ІДАБК' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='2' /&gt;&lt;/column&gt;&lt;column name='Документ' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='3' /&gt;&lt;/column&gt;&lt;column name='Об`єкт' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='4' /&gt;&lt;/column&gt;&lt;column name='Кат' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='5' /&gt;&lt;/column&gt;&lt;column name='Замовник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='6' /&gt;&lt;/column&gt;&lt;column name='Технічний нагляд' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='7' /&gt;&lt;/column&gt;&lt;column name='Проектувальник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='8' /&gt;&lt;/column&gt;&lt;column name='Авторський нагляд' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='9' /&gt;&lt;/column&gt;&lt;column name='Підрядник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='10' /&gt;&lt;/column&gt;&lt;column name='Інформація про земельну ділянку' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='11' /&gt;&lt;/column&gt;&lt;/extract&gt;" sap2010:WorkflowViewState.IdRef="ExtractData_10" MaxNumberOfResults="5000">
+                                      <ui:ExtractData.Target>
+                                        <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="a9d77358bea3cae84b43be3e68180769" Selector="&lt;webctrl tag='TBODY' /&gt;" WaitForReady="COMPLETE" />
+                                      </ui:ExtractData.Target>
+                                    </ui:ExtractData>
+                                  </Sequence>
+                                </ActivityAction>
+                              </ui:BrowserScope.Body>
+                            </ui:BrowserScope>
+                          </Sequence>
+                        </If.Then>
+                        <If.Else>
+                          <Sequence sap2010:WorkflowViewState.IdRef="Sequence_123">
+                            <Assign sap2010:WorkflowViewState.IdRef="Assign_65">
+                              <Assign.To>
+                                <OutArgument x:TypeArguments="sd:DataTable">[ExtractDataTable]</OutArgument>
+                              </Assign.To>
+                              <Assign.Value>
+                                <InArgument x:TypeArguments="sd:DataTable">[Nothing]</InArgument>
+                              </Assign.Value>
+                            </Assign>
+                            <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_35" Level="Trace" Message="data at current filter was not acquired" />
+                            <Assign sap2010:WorkflowViewState.IdRef="Assign_66">
+                              <Assign.To>
+                                <OutArgument x:TypeArguments="s:Exception">[ErrorOccured]</OutArgument>
+                              </Assign.To>
+                              <Assign.Value>
+                                <InArgument x:TypeArguments="s:Exception">[Nothing]</InArgument>
+                              </Assign.Value>
+                            </Assign>
+                          </Sequence>
+                        </If.Else>
+                      </If>
+                    </Sequence>
+                    <FlowStep.Next>
+                      <FlowDecision x:Name="__ReferenceID11" sap2010:Annotation.AnnotationText="Any data for scraping?" Condition="[ExtractDataTable isnot Nothing]" DisplayName="DataTable isn't Nothing" sap2010:WorkflowViewState.IdRef="FlowDecision_5">
+                        <FlowDecision.True>
+                          <FlowStep x:Name="__ReferenceID25" sap2010:WorkflowViewState.IdRef="FlowStep_36">
+                            <Assign sap2010:Annotation.AnnotationText="Cannot scrape the table effectively when the Category column with a name of 'Кат.'. I had to set the name as 'Кат' during scraping and rename it later." sap2010:WorkflowViewState.IdRef="Assign_79">
+                              <Assign.To>
+                                <OutArgument x:TypeArguments="x:String">[ExtractDataTable.Columns("Кат").ColumnName]</OutArgument>
+                              </Assign.To>
+                              <Assign.Value>
+                                <InArgument x:TypeArguments="x:String">Кат.</InArgument>
+                              </Assign.Value>
+                            </Assign>
+                            <FlowStep.Next>
+                              <FlowStep x:Name="__ReferenceID13" sap2010:WorkflowViewState.IdRef="FlowStep_22">
+                                <ui:MergeDataTable sap2010:Annotation.AnnotationText="Aggregate the scraped data to dataTableClean" Destination="[dataTableClean]" DisplayName="Merge Data Table" sap2010:WorkflowViewState.IdRef="MergeDataTable_6" MissingSchemaAction="Add" Source="[ExtractDataTable]" />
+                                <FlowStep.Next>
+                                  <FlowStep x:Name="__ReferenceID29" sap2010:WorkflowViewState.IdRef="FlowStep_41">
+                                    <Assign sap2010:WorkflowViewState.IdRef="Assign_86">
+                                      <Assign.To>
+                                        <OutArgument x:TypeArguments="x:String">[varText]</OutArgument>
+                                      </Assign.To>
+                                      <Assign.Value>
+                                        <InArgument x:TypeArguments="x:String" xml:space="preserve">[ExtractDataTable.Rows(  ExtractDataTable.Rows.Count-1)("№").ToString]</InArgument>
+                                      </Assign.Value>
+                                    </Assign>
+                                    <FlowStep.Next>
+                                      <FlowStep x:Name="__ReferenceID24" sap2010:WorkflowViewState.IdRef="FlowStep_35">
+                                        <Assign sap2010:Annotation.AnnotationText="Check if last row of scraped datatable contains numbers of pages" sap2010:WorkflowViewState.IdRef="Assign_78">
+                                          <Assign.To>
+                                            <OutArgument x:TypeArguments="x:Boolean">[keyBooleanPages]</OutArgument>
+                                          </Assign.To>
+                                          <Assign.Value>
+                                            <InArgument x:TypeArguments="x:Boolean" xml:space="preserve">[Int32.TryParse(varText.Trim.Split(chr(32))(   varText.Trim.Split(chr(32)).Count-1 ).ToString, maxnbPage)]</InArgument>
+                                          </Assign.Value>
+                                        </Assign>
+                                        <FlowStep.Next>
+                                          <FlowDecision x:Name="__ReferenceID14" sap2010:Annotation.AnnotationText="if data is listed on multiple pages." Condition="[keyBooleanPages]" DisplayName="" sap2010:WorkflowViewState.IdRef="FlowDecision_4">
+                                            <FlowDecision.True>
+                                              <FlowStep x:Name="__ReferenceID15" sap2010:WorkflowViewState.IdRef="FlowStep_19">
+                                                <Assign sap2010:Annotation.AnnotationText="Get maximum nb of pages at current filter options." sap2010:WorkflowViewState.IdRef="Assign_68">
+                                                  <Assign.To>
+                                                    <OutArgument x:TypeArguments="x:Int32">[maxnbPage]</OutArgument>
+                                                  </Assign.To>
+                                                  <Assign.Value>
+                                                    <InArgument x:TypeArguments="x:Int32">[Int32.Parse(varText.Trim.Split(chr(32))( varText.Trim.Split(chr(32)).Count-1 ).ToString)]</InArgument>
+                                                  </Assign.Value>
+                                                </Assign>
+                                                <FlowStep.Next>
+                                                  <FlowStep x:Name="__ReferenceID16" sap2010:WorkflowViewState.IdRef="FlowStep_18">
+                                                    <Assign sap2010:WorkflowViewState.IdRef="Assign_69">
+                                                      <Assign.To>
+                                                        <OutArgument x:TypeArguments="x:Int32">[counter]</OutArgument>
+                                                      </Assign.To>
+                                                      <Assign.Value>
+                                                        <InArgument x:TypeArguments="x:Int32">1</InArgument>
+                                                      </Assign.Value>
+                                                    </Assign>
+                                                    <FlowStep.Next>
+                                                      <FlowDecision x:Name="__ReferenceID2" sap2010:Annotation.AnnotationText="if a next pages exists, let's proceed to itsscraping." Condition="[counter&lt;maxnbPage]" DisplayName="Flow Decision" sap2010:WorkflowViewState.IdRef="FlowDecision_6">
+                                                        <FlowDecision.True>
+                                                          <FlowDecision x:Name="__ReferenceID0" sap2010:Annotation.AnnotationText="Loop for multiple pages: counter - nb of page. Automatically stops when counter exceeds the maximal number of pages maxnbPages scraped here above." Condition="[counter&lt;maxnbPage]" DisplayName="counter&lt;maxnbPage" sap2010:WorkflowViewState.IdRef="FlowDecision_7">
+                                                            <FlowDecision.True>
+                                                              <FlowStep x:Name="__ReferenceID22" sap2010:WorkflowViewState.IdRef="FlowStep_32">
+                                                                <Assign sap2010:WorkflowViewState.IdRef="Assign_76">
+                                                                  <Assign.To>
+                                                                    <OutArgument x:TypeArguments="x:Int32">[counter]</OutArgument>
+                                                                  </Assign.To>
+                                                                  <Assign.Value>
+                                                                    <InArgument x:TypeArguments="x:Int32">[counter+1]</InArgument>
+                                                                  </Assign.Value>
+                                                                </Assign>
+                                                                <FlowStep.Next>
+                                                                  <FlowStep x:Name="__ReferenceID21" sap2010:WorkflowViewState.IdRef="FlowStep_31">
+                                                                    <TryCatch sap2010:Annotation.AnnotationText="Use this try-catch block to be sure, that no exceptions appear during loading a new page. However, it works only for the case of System.Error or Internet Connection failure, etc., while actual pages with &quot;high nb pages&quot; may not exist. The NextPageSelector is redunante in current workflow, and we count each page with respect to a maximum nb of pages.  " DisplayName="Try Catch-if any problem with opening next page" sap2010:WorkflowViewState.IdRef="TryCatch_11">
+                                                                      <TryCatch.Try>
+                                                                        <Sequence sap2010:WorkflowViewState.IdRef="Sequence_140">
+                                                                          <ui:BrowserScope Browser="{x:Null}" SearchScope="{x:Null}" TimeoutMS="{x:Null}" UiBrowser="{x:Null}" BrowserType="IE" DisplayName="Attach Browser - Scrape data" sap2010:WorkflowViewState.IdRef="BrowserScope_6" InformativeScreenshot="2386e2246bb3281b6ff8402ef0dbb5a8" Selector="&lt;html title='Перегляд документів' /&gt;">
+                                                                            <ui:BrowserScope.Body>
+                                                                              <ActivityAction x:TypeArguments="x:Object">
+                                                                                <ActivityAction.Argument>
+                                                                                  <DelegateInArgument x:TypeArguments="x:Object" Name="ContextTarget" />
+                                                                                </ActivityAction.Argument>
+                                                                                <Sequence DisplayName="Do" sap2010:WorkflowViewState.IdRef="Sequence_139">
+                                                                                  <Sequence.Variables>
+                                                                                    <Variable x:TypeArguments="x:String" Name="text" />
+                                                                                  </Sequence.Variables>
+                                                                                  <Sequence sap2010:WorkflowViewState.IdRef="Sequence_138">
+                                                                                    <Sequence.Variables>
+                                                                                      <Variable x:TypeArguments="x:Boolean" Name="watchDog" />
+                                                                                    </Sequence.Variables>
+                                                                                    <ui:NavigateTo Browser="{x:Null}" DisplayName="Navigate To" sap2010:WorkflowViewState.IdRef="NavigateTo_6" Url="[&quot;https://dabi.gov.ua/declarate/list.php&quot;+&quot;?&amp;&amp;page=&quot;+counter.ToString]" />
+                                                                                    <ui:UiElementExists DisplayName="Element Exists 'B'" Exists="[watchDog]" sap2010:WorkflowViewState.IdRef="UiElementExists_9">
+                                                                                      <ui:UiElementExists.Target>
+                                                                                        <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" InformativeScreenshot="c208bb2b66d034f132a2c4b552e28559" Selector="&lt;webctrl idx='1' tag='B' /&gt;" TimeoutMS="3000" WaitForReady="INTERACTIVE" />
+                                                                                      </ui:UiElementExists.Target>
+                                                                                    </ui:UiElementExists>
+                                                                                    <If Condition="[not watchDog]" sap2010:WorkflowViewState.IdRef="If_21">
+                                                                                      <If.Then>
+                                                                                        <Sequence sap2010:WorkflowViewState.IdRef="Sequence_137">
+                                                                                          <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_42" Level="Error" Message="No internet connection or other problem loading the page... " />
+                                                                                          <Throw Exception="[new Exception(&quot;Problem loading a next page. Check internet connection and browser.&quot;)]" sap2010:WorkflowViewState.IdRef="Throw_9" />
+                                                                                        </Sequence>
+                                                                                      </If.Then>
+                                                                                    </If>
+                                                                                  </Sequence>
+                                                                                </Sequence>
+                                                                              </ActivityAction>
+                                                                            </ui:BrowserScope.Body>
+                                                                          </ui:BrowserScope>
+                                                                        </Sequence>
+                                                                      </TryCatch.Try>
+                                                                      <TryCatch.Catches>
+                                                                        <Catch x:TypeArguments="s:Exception" sap2010:WorkflowViewState.IdRef="Catch`1_11">
+                                                                          <ActivityAction x:TypeArguments="s:Exception">
+                                                                            <ActivityAction.Argument>
+                                                                              <DelegateInArgument x:TypeArguments="s:Exception" Name="exception" />
+                                                                            </ActivityAction.Argument>
+                                                                            <Sequence sap2010:WorkflowViewState.IdRef="Sequence_141">
+                                                                              <Assign sap2010:WorkflowViewState.IdRef="Assign_77">
+                                                                                <Assign.To>
+                                                                                  <OutArgument x:TypeArguments="s:Exception">[ErrorOccured]</OutArgument>
+                                                                                </Assign.To>
+                                                                                <Assign.Value>
+                                                                                  <InArgument x:TypeArguments="s:Exception">[exception]</InArgument>
+                                                                                </Assign.Value>
+                                                                              </Assign>
+                                                                            </Sequence>
+                                                                          </ActivityAction>
+                                                                        </Catch>
+                                                                      </TryCatch.Catches>
+                                                                    </TryCatch>
+                                                                    <FlowStep.Next>
+                                                                      <FlowStep x:Name="__ReferenceID20" sap2010:WorkflowViewState.IdRef="FlowStep_30">
+                                                                        <ui:LogMessage sap2010:Annotation.AnnotationText="Let's log a page nb, it is good for testing and tech review." DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_43" Level="Trace" Message="[&quot;processing page = &quot;+counter.ToString + &quot;  max nb pages = &quot;+maxnbPage.ToString]" />
+                                                                        <FlowStep.Next>
+                                                                          <FlowStep x:Name="__ReferenceID27" sap2010:WorkflowViewState.IdRef="FlowStep_39">
+                                                                            <Assign sap2010:Annotation.AnnotationText="Clear variable before scraping" sap2010:WorkflowViewState.IdRef="Assign_81">
+                                                                              <Assign.To>
+                                                                                <OutArgument x:TypeArguments="sd:DataTable">[ExtractDataTable]</OutArgument>
+                                                                              </Assign.To>
+                                                                              <Assign.Value>
+                                                                                <InArgument x:TypeArguments="sd:DataTable">[Nothing]</InArgument>
+                                                                              </Assign.Value>
+                                                                            </Assign>
+                                                                            <FlowStep.Next>
+                                                                              <FlowStep x:Name="__ReferenceID23" sap2010:WorkflowViewState.IdRef="FlowStep_28">
+                                                                                <ui:BrowserScope Browser="{x:Null}" SearchScope="{x:Null}" TimeoutMS="{x:Null}" UiBrowser="{x:Null}" BrowserType="IE" DisplayName="Attach Browser - Scrape data" sap2010:WorkflowViewState.IdRef="BrowserScope_7" InformativeScreenshot="2386e2246bb3281b6ff8402ef0dbb5a8" Selector="&lt;html title='Перегляд документів' /&gt;">
+                                                                                  <ui:BrowserScope.Body>
+                                                                                    <ActivityAction x:TypeArguments="x:Object">
+                                                                                      <ActivityAction.Argument>
+                                                                                        <DelegateInArgument x:TypeArguments="x:Object" Name="ContextTarget" />
+                                                                                      </ActivityAction.Argument>
+                                                                                      <Sequence DisplayName="Do" sap2010:WorkflowViewState.IdRef="Sequence_142">
+                                                                                        <Sequence.Variables>
+                                                                                          <Variable x:TypeArguments="x:String" Name="text" />
+                                                                                        </Sequence.Variables>
+                                                                                        <ui:ExtractData NextLinkSelector="{x:Null}" ContinueOnError="True" DataTable="[ExtractDataTable]" DelayBetweenPagesMS="300" DisplayName="Extract Structured Data 'TBODY'" ExtractMetadata="&lt;extract&gt;&lt;row exact='3'&gt;&lt;webctrl tag='tr' /&gt;&lt;/row&gt;&lt;column name='№' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='1' /&gt;&lt;/column&gt;&lt;column name='ІДАБК' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='2' /&gt;&lt;/column&gt;&lt;column name='Документ' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='3' /&gt;&lt;/column&gt;&lt;column name='Об`єкт' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='4' /&gt;&lt;/column&gt;&lt;column name='Кат' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='5' /&gt;&lt;/column&gt;&lt;column name='Замовник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='6' /&gt;&lt;/column&gt;&lt;column name='Технічний нагляд' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='7' /&gt;&lt;/column&gt;&lt;column name='Проектувальник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='8' /&gt;&lt;/column&gt;&lt;column name='Авторський нагляд' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='9' /&gt;&lt;/column&gt;&lt;column name='Підрядник' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='10' /&gt;&lt;/column&gt;&lt;column name='Інформація про земельну ділянку' attr='text' exact='1'&gt;&lt;webctrl tag='tr' /&gt;&lt;webctrl tag='td' idx='11' /&gt;&lt;/column&gt;&lt;/extract&gt;" sap2010:WorkflowViewState.IdRef="ExtractData_9" MaxNumberOfResults="5000">
+                                                                                          <ui:ExtractData.Target>
+                                                                                            <ui:Target ClippingRegion="{x:Null}" Element="{x:Null}" TimeoutMS="{x:Null}" InformativeScreenshot="a9d77358bea3cae84b43be3e68180769" Selector="&lt;webctrl tag='TBODY' /&gt;" WaitForReady="COMPLETE" />
+                                                                                          </ui:ExtractData.Target>
+                                                                                        </ui:ExtractData>
+                                                                                      </Sequence>
+                                                                                    </ActivityAction>
+                                                                                  </ui:BrowserScope.Body>
+                                                                                </ui:BrowserScope>
+                                                                                <FlowStep.Next>
+                                                                                  <FlowStep x:Name="__ReferenceID26" sap2010:WorkflowViewState.IdRef="FlowStep_37">
+                                                                                    <Assign sap2010:Annotation.AnnotationText="Cannot scrape the table effectively when the Category column with a name of 'Кат.'. I had to set the name as 'Кат' during scraping and rename it later." sap2010:WorkflowViewState.IdRef="Assign_80">
+                                                                                      <Assign.To>
+                                                                                        <OutArgument x:TypeArguments="x:String">[ExtractDataTable.Columns("Кат").ColumnName]</OutArgument>
+                                                                                      </Assign.To>
+                                                                                      <Assign.Value>
+                                                                                        <InArgument x:TypeArguments="x:String">Кат.</InArgument>
+                                                                                      </Assign.Value>
+                                                                                    </Assign>
+                                                                                    <FlowStep.Next>
+                                                                                      <FlowStep x:Name="__ReferenceID19" sap2010:WorkflowViewState.IdRef="FlowStep_27">
+                                                                                        <ui:MergeDataTable sap2010:Annotation.AnnotationText="Add newly scraped data to already existing data in this block." Destination="[dataTableClean]" DisplayName="Merge Data Table" sap2010:WorkflowViewState.IdRef="MergeDataTable_9" MissingSchemaAction="Add" Source="[ExtractDataTable]" />
+                                                                                        <FlowStep.Next>
+                                                                                          <FlowStep x:Name="__ReferenceID28" sap2010:WorkflowViewState.IdRef="FlowStep_38">
+                                                                                            <Assign sap2010:Annotation.AnnotationText="Clear variable after scraping." sap2010:WorkflowViewState.IdRef="Assign_82">
+                                                                                              <Assign.To>
+                                                                                                <OutArgument x:TypeArguments="sd:DataTable">[ExtractDataTable]</OutArgument>
+                                                                                              </Assign.To>
+                                                                                              <Assign.Value>
+                                                                                                <InArgument x:TypeArguments="sd:DataTable">[Nothing]</InArgument>
+                                                                                              </Assign.Value>
+                                                                                            </Assign>
+                                                                                            <FlowStep.Next>
+                                                                                              <x:Reference>__ReferenceID0</x:Reference>
+                                                                                            </FlowStep.Next>
+                                                                                          </FlowStep>
+                                                                                        </FlowStep.Next>
+                                                                                      </FlowStep>
+                                                                                    </FlowStep.Next>
+                                                                                  </FlowStep>
+                                                                                </FlowStep.Next>
+                                                                              </FlowStep>
+                                                                            </FlowStep.Next>
+                                                                          </FlowStep>
+                                                                        </FlowStep.Next>
+                                                                      </FlowStep>
+                                                                    </FlowStep.Next>
+                                                                  </FlowStep>
+                                                                </FlowStep.Next>
+                                                              </FlowStep>
+                                                            </FlowDecision.True>
+                                                            <FlowDecision.False>
+                                                              <FlowDecision x:Name="__ReferenceID1" sap2010:Annotation.AnnotationText="Some errors occured during execution" Condition="[ErrorOccured IsNot Nothing]" DisplayName="Flow Decision" sap2010:WorkflowViewState.IdRef="FlowDecision_3">
+                                                                <FlowDecision.True>
+                                                                  <FlowStep x:Name="__ReferenceID7" sap2010:WorkflowViewState.IdRef="FlowStep_13">
+                                                                    <Throw sap2010:Annotation.AnnotationText="Error is thrown!" DisplayName="Throw Exception" Exception="[ErrorOccured]" sap2010:WorkflowViewState.IdRef="Throw_5" />
+                                                                  </FlowStep>
+                                                                </FlowDecision.True>
+                                                                <FlowDecision.False>
+                                                                  <FlowDecision x:Name="__ReferenceID5" sap2010:Annotation.AnnotationText="Scraped data is not empty" Condition="[maxnbPage &lt;&gt; 0]" DisplayName="Flow Decision" sap2010:WorkflowViewState.IdRef="FlowDecision_2">
+                                                                    <FlowDecision.True>
+                                                                      <FlowStep x:Name="__ReferenceID6" sap2010:WorkflowViewState.IdRef="FlowStep_11">
+                                                                        <ui:InvokeWorkflowFile ContinueOnError="{x:Null}" sap2010:Annotation.AnnotationText="Here the aggregated datatable dataTableClean is clleaned off the empty rows and then it is saved to the data store. If the database/Excel file does not exist yet, it is created. Otherwise, the aggregated data is appended to existing file.&#xA;This workflow also add the additional columns to the final datatable (Links 2 youcontrol, etc)." DisplayName="Invoke CleanAndSaveScrapedDataTable workflow" sap2010:WorkflowViewState.IdRef="InvokeWorkflowFile_6" UnSafe="False" WorkflowFileName="SECI/CleanAndSaveScrapedDataTable.xaml">
+                                                                          <ui:InvokeWorkflowFile.Arguments>
+                                                                            <InOutArgument x:TypeArguments="sd:DataTable" x:Key="dataTableClean">[dataTableClean]</InOutArgument>
+                                                                            <OutArgument x:TypeArguments="s:Exception" x:Key="out_Error">[ErrorOccured]</OutArgument>
+                                                                            <InArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)" x:Key="in_Config">[in_Config]</InArgument>
+                                                                            <InArgument x:TypeArguments="x:String" x:Key="in_filters_r">[in_filters_r]</InArgument>
+                                                                            <InArgument x:TypeArguments="x:String" x:Key="in_filters_y">[in_filters_y]</InArgument>
+                                                                            <InArgument x:TypeArguments="x:String" x:Key="in_filters_m">[in_filters_m]</InArgument>
+                                                                            <InArgument x:TypeArguments="ui:DatabaseConnection" x:Key="in_DB_CONNECTION_local">[in_DB_CONNECTION_local]</InArgument>
+                                                                          </ui:InvokeWorkflowFile.Arguments>
+                                                                        </ui:InvokeWorkflowFile>
+                                                                        <FlowStep.Next>
+                                                                          <FlowDecision x:Name="__ReferenceID30" Condition="[ErrorOccured isnot Nothing]" DisplayName="any error" sap2010:WorkflowViewState.IdRef="FlowDecision_8">
+                                                                            <FlowDecision.True>
+                                                                              <FlowStep x:Name="__ReferenceID31" sap2010:WorkflowViewState.IdRef="FlowStep_42">
+                                                                                <Throw DisplayName="Throw Exception" Exception="[ErrorOccured]" sap2010:WorkflowViewState.IdRef="Throw_10" />
+                                                                              </FlowStep>
+                                                                            </FlowDecision.True>
+                                                                          </FlowDecision>
+                                                                        </FlowStep.Next>
+                                                                      </FlowStep>
+                                                                    </FlowDecision.True>
+                                                                    <FlowDecision.False>
+                                                                      <FlowStep x:Name="__ReferenceID3" sap2010:WorkflowViewState.IdRef="FlowStep_12">
+                                                                        <ui:LogMessage sap2010:Annotation.AnnotationText="No data present on current webpage. It's better to be logged. " DisplayName="Log Message Empty Page" sap2010:WorkflowViewState.IdRef="LogMessage_26" Level="Trace" Message="current page is empty" />
+                                                                      </FlowStep>
+                                                                    </FlowDecision.False>
+                                                                  </FlowDecision>
+                                                                </FlowDecision.False>
+                                                              </FlowDecision>
+                                                            </FlowDecision.False>
+                                                          </FlowDecision>
+                                                        </FlowDecision.True>
+                                                        <FlowDecision.False>
+                                                          <x:Reference>__ReferenceID1</x:Reference>
+                                                        </FlowDecision.False>
+                                                      </FlowDecision>
+                                                    </FlowStep.Next>
+                                                  </FlowStep>
+                                                </FlowStep.Next>
+                                              </FlowStep>
+                                            </FlowDecision.True>
+                                            <FlowDecision.False>
+                                              <FlowStep x:Name="__ReferenceID17" sap2010:WorkflowViewState.IdRef="FlowStep_21">
+                                                <Assign sap2010:Annotation.AnnotationText="No more pages. Th first is the one." sap2010:WorkflowViewState.IdRef="Assign_70">
+                                                  <Assign.To>
+                                                    <OutArgument x:TypeArguments="x:Int32">[maxnbPage]</OutArgument>
+                                                  </Assign.To>
+                                                  <Assign.Value>
+                                                    <InArgument x:TypeArguments="x:Int32">1</InArgument>
+                                                  </Assign.Value>
+                                                </Assign>
+                                                <FlowStep.Next>
+                                                  <FlowStep x:Name="__ReferenceID18" sap2010:WorkflowViewState.IdRef="FlowStep_20">
+                                                    <Assign sap2010:Annotation.AnnotationText="We may not forward the workflow to the next page evaluation, but it's  easier to follow the flow (and symmetry!)." sap2010:WorkflowViewState.IdRef="Assign_71">
+                                                      <Assign.To>
+                                                        <OutArgument x:TypeArguments="x:Int32">[counter]</OutArgument>
+                                                      </Assign.To>
+                                                      <Assign.Value>
+                                                        <InArgument x:TypeArguments="x:Int32">1</InArgument>
+                                                      </Assign.Value>
+                                                    </Assign>
+                                                    <FlowStep.Next>
+                                                      <x:Reference>__ReferenceID2</x:Reference>
+                                                    </FlowStep.Next>
+                                                  </FlowStep>
+                                                </FlowStep.Next>
+                                              </FlowStep>
+                                            </FlowDecision.False>
+                                          </FlowDecision>
+                                        </FlowStep.Next>
+                                      </FlowStep>
+                                    </FlowStep.Next>
+                                  </FlowStep>
+                                </FlowStep.Next>
+                              </FlowStep>
+                            </FlowStep.Next>
+                          </FlowStep>
+                        </FlowDecision.True>
+                        <FlowDecision.False>
+                          <FlowStep x:Name="__ReferenceID12" sap2010:WorkflowViewState.IdRef="FlowStep_17">
+                            <Assign sap2010:Annotation.AnnotationText="Set maximum nb of pages at current filter options." sap2010:WorkflowViewState.IdRef="Assign_67">
+                              <Assign.To>
+                                <OutArgument x:TypeArguments="x:Int32">[maxnbPage]</OutArgument>
+                              </Assign.To>
+                              <Assign.Value>
+                                <InArgument x:TypeArguments="x:Int32">0</InArgument>
+                              </Assign.Value>
+                            </Assign>
+                            <FlowStep.Next>
+                              <x:Reference>__ReferenceID3</x:Reference>
+                            </FlowStep.Next>
+                          </FlowStep>
+                        </FlowDecision.False>
+                      </FlowDecision>
+                    </FlowStep.Next>
+                  </FlowStep>
+                </FlowStep.Next>
+              </FlowStep>
+            </FlowStep.Next>
+          </FlowStep>
+        </FlowStep.Next>
+      </FlowStep>
+    </Flowchart.StartNode>
+    <x:Reference>__ReferenceID4</x:Reference>
+    <x:Reference>__ReferenceID1</x:Reference>
+    <x:Reference>__ReferenceID5</x:Reference>
+    <x:Reference>__ReferenceID6</x:Reference>
+    <x:Reference>__ReferenceID3</x:Reference>
+    <x:Reference>__ReferenceID7</x:Reference>
+    <x:Reference>__ReferenceID8</x:Reference>
+    <x:Reference>__ReferenceID9</x:Reference>
+    <x:Reference>__ReferenceID10</x:Reference>
+    <x:Reference>__ReferenceID11</x:Reference>
+    <x:Reference>__ReferenceID12</x:Reference>
+    <x:Reference>__ReferenceID13</x:Reference>
+    <x:Reference>__ReferenceID14</x:Reference>
+    <x:Reference>__ReferenceID15</x:Reference>
+    <x:Reference>__ReferenceID16</x:Reference>
+    <x:Reference>__ReferenceID17</x:Reference>
+    <x:Reference>__ReferenceID18</x:Reference>
+    <x:Reference>__ReferenceID2</x:Reference>
+    <x:Reference>__ReferenceID0</x:Reference>
+    <x:Reference>__ReferenceID19</x:Reference>
+    <x:Reference>__ReferenceID20</x:Reference>
+    <x:Reference>__ReferenceID21</x:Reference>
+    <x:Reference>__ReferenceID22</x:Reference>
+    <x:Reference>__ReferenceID23</x:Reference>
+    <x:Reference>__ReferenceID24</x:Reference>
+    <x:Reference>__ReferenceID25</x:Reference>
+    <x:Reference>__ReferenceID26</x:Reference>
+    <x:Reference>__ReferenceID27</x:Reference>
+    <x:Reference>__ReferenceID28</x:Reference>
+    <x:Reference>__ReferenceID29</x:Reference>
+    <x:Reference>__ReferenceID30</x:Reference>
+    <x:Reference>__ReferenceID31</x:Reference>
+    <sads:DebugSymbol.Symbol>d1lDOlxVc2Vyc1xBdG9tXE9uZURyaXZlXHNlY2ktMS0xNDAyMjAxOVxTRUNJX1NjcmFwaW5nXyBQZXJmb3JtZXJcU0VDSVxnZXRTZWNpRGF0YVBhZ2UueGFtbJ8BVQOXBQ8CAQFXNFdEAgEKWDRYXAIBCVk3WUICAQhaOFpVAgEHWzhbVQIBBlwzXDYCAQVdM102AgEEXjVePAIBA181XzwCAQJkCeEBFAMBvwHkAQ3kAZQBAwG9AecBEecBlwEDAboB6gEVswIgAwGWAbUCgwG1AqUBAwGVAd8EHeYEJgMBkQGmBEmmBMACAwGPAbgCHb8CJgMBjAHCAiHCAq4CAwGHAcUCJcwCLgMBgwHPAinWAjICAX/YAqUB2AK4AQIBfboEMcEEOgIBecQENcsEPgIBde4CwQHuAtkBAgFyhAS4AYQE1gECAXCLBLEBiwTJAQIBbo4ESZgEYQIBXpoEfJoEmgECAVydBFGdBL4BAgFZhwRFhwTmAQIBVvACogLwAroCAgFT8wJB+gJKAgFO/QJFtgNQAgEyuQNJuQOCAwIBLrwDTcMDVgIBKsYDUdgDYwIBH9sDVeIDXgIBHOUDWeUD+AICARfoA13vA2YCARPbAjHiAjoCAQ/lAjXsAj4CAQtlC+ABHQMBwAHkAXzkAZEBAwG+AecBLucBQgMBuwHrARf9ASkDAbIB/gEXhAInAwGxAYUCF7ICHAMBlwHkBEfkBEgDAZQB4QRI4QRTAwGSAaYEpgKmBL0CAwGQAb0CSL0CTAMBjgG6Akm6AnUDAY0BwgKRAcICowEDAYoBwgKXAsICqwIDAYgBxwJRxwJaAwGEAdECVtECZwMBgAG/BFu/BFwCAXy8BFy8BGcCAXrJBF/JBGACAXjGBGDGBGkCAXaUBIkBlASXAQIBbJAEkgGQBKIBAgFqkQSKAZEEmAECAWiVBIkBlQSXAQIBZpMEiQGTBJcBAgFklgSgAZYEuAECAWKSBKABkgSrAQIBYI4EhAWOBKwFAgFfnQSAAZ0EkAECAVqHBKkBhwS5AQIBV/gCa/gCdgIBUfUCbPUCdQIBT/8CSaEDVAIBOakDTbIDWAIBM7kDmQK5A/8CAgEvwQN8wQOFAQIBLb4Dfb4DjwECASvGA+UCxgORAwIBKcwDV9UDYgIBIOADgAHgA4QBAgEe3QOBAd0DrQECAR3lA9sB5QPtAQIBGuUD4QLlA/UCAgEY7QOMAe0DlQECARbqA40B6gOfAQIBFOACW+ACtQECARLdAlzdAmcCARDqAl/qAmACAQ7nAmDnAmkCAQxlqQJl1QIDAdIBaxHdARwDAcEB6wGrAusB1wIDAbkB8QEd+gEoAwGzAYUCJYUCNgMBmAGHAhubAiYDAaUBngIbsAImAwGaAYADS6ADXQIBOqoDT7EDWAIBNNADWdQDagIBIW8TkwEjAwHOAZQBE6YBIwMBygGnARO7ASMDAcYBvAETygEeAwHEAcsBE9MBIwMBwwHUARPcASMDAcIB9QEf+QE0AwG0AYgCHZoCLwMBpgGfAh2mAiYDAaEBpwIdpwK4AQMBnwGoAh2vAiYDAZsBgAPfAoADiwMCAU2GA1GdA1wCATuvA32vA4gBAgE3rAN+rAOMAQIBNdADyA7QA84OAgEo0gPsAdIDiwICASfQA88B0APUAQIBJtADlQHQA5sBAgEl0AOmAdADugECASPQA5MC0AOEDgIBIm/BAW/RAQMBzwGRAaYBkQHbAQMB0QGUAcEBlAHRAQMBywGkAaYBpAHaAQMBzQGnAcEBpwHRAQMBxwG5AaYBuQHbAQMByQHIAaYByAHjAQMBxQH3AZ0B9wHAAQMBuAH3AcsB9wHRAQMBtwH1AVv1AWwDAbUBiAKyAogC3gIDAbABjgIjlwIuAwGnAaQCTKQCVQMBpAGhAk2hAl8DAaIBpwKMAacCtQEDAaABrQJLrQJUAwGeAaoCTKoCWgMBnAGKA1OcA14CATySAiWWAjYDAagBjgNVjgOrAgIBSo8DVZMDagIBRZQDVZsDWgIBPZIClQ6SApsOAwGvAZQCuAGUAtcBAwGuAZICmwGSAqABAwGtAZICYZICZwMBrAGSAnKSAoYBAwGqAZIC3wGSAtANAwGpAY4DxAGOA6gCAgFLkQPTAZED9gECAUmRA4ECkQOHAgIBSI8DkQGPA50BAgFGlANjlANzAgE+lgNZmQNkAgFAlwNblwOLAgIBQ5gDW5gD+wECAUGXA8oBlwOIAgIBRJgDbJgDzgECAUI=</sads:DebugSymbol.Symbol>
+  </Flowchart>
+  <sap2010:WorkflowViewState.ViewStateManager>
+    <sap2010:ViewStateManager>
+      <sap2010:ViewStateData Id="SelectItem_1" sap:VirtualizedContainerService.HintSize="416,134" />
+      <sap2010:ViewStateData Id="SelectItem_2" sap:VirtualizedContainerService.HintSize="416,134" />
+      <sap2010:ViewStateData Id="SelectItem_3" sap:VirtualizedContainerService.HintSize="416,134" />
+      <sap2010:ViewStateData Id="Click_1" sap:VirtualizedContainerService.HintSize="416,106" />
+      <sap2010:ViewStateData Id="LogMessage_9" sap:VirtualizedContainerService.HintSize="314,91" />
+      <sap2010:ViewStateData Id="Sequence_151" sap:VirtualizedContainerService.HintSize="336,215">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="CommentOut_10" sap:VirtualizedContainerService.HintSize="416,293" />
+      <sap2010:ViewStateData Id="Delay_1" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="Sequence_152" sap:VirtualizedContainerService.HintSize="222,146">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="CommentOut_11" sap:VirtualizedContainerService.HintSize="416,224" />
+      <sap2010:ViewStateData Id="Sequence_78" sap:VirtualizedContainerService.HintSize="438,1349">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="BrowserScope_1" sap:VirtualizedContainerService.HintSize="452,1495" />
+      <sap2010:ViewStateData Id="Sequence_79" sap:VirtualizedContainerService.HintSize="474,1676">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="LogMessage_33" sap:VirtualizedContainerService.HintSize="200,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="ClearDataTable_9" sap:VirtualizedContainerService.HintSize="200,22" />
+      <sap2010:ViewStateData Id="UiElementExists_10" sap:VirtualizedContainerService.HintSize="314,106">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_143" sap:VirtualizedContainerService.HintSize="336,230">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="BrowserScope_8" sap:VirtualizedContainerService.HintSize="797,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="LogMessage_34" sap:VirtualizedContainerService.HintSize="314,91" />
+      <sap2010:ViewStateData Id="Sequence_150" sap:VirtualizedContainerService.HintSize="336,215">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="CommentOut_9" sap:VirtualizedContainerService.HintSize="797,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="ExtractData_10" sap:VirtualizedContainerService.HintSize="314,106" />
+      <sap2010:ViewStateData Id="Sequence_148" sap:VirtualizedContainerService.HintSize="336,230">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="BrowserScope_10" sap:VirtualizedContainerService.HintSize="414,376">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_149" sap:VirtualizedContainerService.HintSize="436,500">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_65" sap:VirtualizedContainerService.HintSize="314,60" />
+      <sap2010:ViewStateData Id="LogMessage_35" sap:VirtualizedContainerService.HintSize="314,91" />
+      <sap2010:ViewStateData Id="Assign_66" sap:VirtualizedContainerService.HintSize="314,60" />
+      <sap2010:ViewStateData Id="Sequence_123" sap:VirtualizedContainerService.HintSize="336,415">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="If_17" sap:VirtualizedContainerService.HintSize="797,648">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_124" sap:VirtualizedContainerService.HintSize="200,108">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_79" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="MergeDataTable_6" sap:VirtualizedContainerService.HintSize="200,64">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_86" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="Assign_78" sap:VirtualizedContainerService.HintSize="242,102">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_68" sap:VirtualizedContainerService.HintSize="242,102">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_69" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="Assign_76" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="NavigateTo_6" sap:VirtualizedContainerService.HintSize="464,59" />
+      <sap2010:ViewStateData Id="UiElementExists_9" sap:VirtualizedContainerService.HintSize="464,106" />
+      <sap2010:ViewStateData Id="LogMessage_42" sap:VirtualizedContainerService.HintSize="314,93" />
+      <sap2010:ViewStateData Id="Throw_9" sap:VirtualizedContainerService.HintSize="314,22" />
+      <sap2010:ViewStateData Id="Sequence_137" sap:VirtualizedContainerService.HintSize="336,279">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="If_21" sap:VirtualizedContainerService.HintSize="464,428">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_138" sap:VirtualizedContainerService.HintSize="486,797">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_139" sap:VirtualizedContainerService.HintSize="508,921">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="BrowserScope_6" sap:VirtualizedContainerService.HintSize="522,1067">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Sequence_140" sap:VirtualizedContainerService.HintSize="544,1191">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_77" sap:VirtualizedContainerService.HintSize="242,60" />
+      <sap2010:ViewStateData Id="Sequence_141" sap:VirtualizedContainerService.HintSize="264,182">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Catch`1_11" sap:VirtualizedContainerService.HintSize="548,22">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="TryCatch_11" sap:VirtualizedContainerService.HintSize="200,258">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="LogMessage_43" sap:VirtualizedContainerService.HintSize="200,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_81" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="ExtractData_9" sap:VirtualizedContainerService.HintSize="314,106" />
+      <sap2010:ViewStateData Id="Sequence_142" sap:VirtualizedContainerService.HintSize="336,230">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="BrowserScope_7" sap:VirtualizedContainerService.HintSize="200,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <x:Boolean x:Key="IsPinned">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_80" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="MergeDataTable_9" sap:VirtualizedContainerService.HintSize="200,22">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_82" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_38">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,1750</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">251,1780 264.5,1780 264.5,1236 413.5,1236 413.5,1264.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_27">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">30,1699</av:Point>
+            <av:Size x:Key="ShapeSize">200,22</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1721 130,1750</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_37">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,1620</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1680 130,1699</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_28">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">30,1544.5</av:Point>
+            <av:Size x:Key="ShapeSize">200,51</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1595.5 130,1620</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_39">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,1460</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1520 130,1544.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_30">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">30,1394.5</av:Point>
+            <av:Size x:Key="ShapeSize">200,51</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1445.5 130,1460</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_31">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">30,1111</av:Point>
+            <av:Size x:Key="ShapeSize">200,258</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1369 130,1394.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_32">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,1010</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,1070 130,1111</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Throw_5" sap:VirtualizedContainerService.HintSize="200,22">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_13">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">440,1539</av:Point>
+            <av:Size x:Key="ShapeSize">200,22</av:Size>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="InvokeWorkflowFile_6" sap:VirtualizedContainerService.HintSize="314,204">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Throw_10" sap:VirtualizedContainerService.HintSize="200,22">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_42">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">640,2020</av:Point>
+            <av:Size x:Key="ShapeSize">200,22</av:Size>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_8" sap:VirtualizedContainerService.HintSize="70,87">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">675,1896.5</av:Point>
+            <av:Size x:Key="ShapeSize">70,87</av:Size>
+            <av:PointCollection x:Key="TrueConnector">675,1940 610,1940 610,2031 640,2031</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_11">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">390,1781</av:Point>
+            <av:Size x:Key="ShapeSize">200,258</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">590,1910 620,1910 620,1866.5 710,1866.5 710,1896.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="LogMessage_26" sap:VirtualizedContainerService.HintSize="200,51">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_12">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">820,1784.5</av:Point>
+            <av:Size x:Key="ShapeSize">200,51</av:Size>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_2" sap:VirtualizedContainerService.HintSize="142,129">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">649,1625.5</av:Point>
+            <av:Size x:Key="ShapeSize">142,129</av:Size>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+            <av:PointCollection x:Key="TrueConnector">649,1690 490,1690 490,1781</av:PointCollection>
+            <av:PointCollection x:Key="FalseConnector">791,1690 920,1690 920,1784.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_3" sap:VirtualizedContainerService.HintSize="151,129">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">644,1394.5</av:Point>
+            <av:Size x:Key="ShapeSize">151,129</av:Size>
+            <av:PointCollection x:Key="FalseConnector">795,1459 876,1459 876,1595.5 720,1595.5 720,1625.5</av:PointCollection>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+            <av:PointCollection x:Key="TrueConnector">644,1460 540,1460 540,1539</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_7" sap:VirtualizedContainerService.HintSize="159,219">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">334,1264.5</av:Point>
+            <av:Size x:Key="ShapeSize">159,219</av:Size>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+            <av:PointCollection x:Key="FalseConnector">493,1374 682,1374 682,1394.5</av:PointCollection>
+            <av:PointCollection x:Key="TrueConnector">334,1374 304,1374 304,980 130,980 130,1010</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_6" sap:VirtualizedContainerService.HintSize="151,144">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">480,958.5</av:Point>
+            <av:Size x:Key="ShapeSize">151,144</av:Size>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+            <av:PointCollection x:Key="FalseConnector">631,1030.5 758,1030.5 758,1394.5</av:PointCollection>
+            <av:PointCollection x:Key="TrueConnector">480,1030.5 413.5,1030.5 413.5,1264.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_18">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">209,850</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">330,910 330,940 517.75,940 517.75,958.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_19">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">209,739</av:Point>
+            <av:Size x:Key="ShapeSize">242,102</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">330,841 330,850</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_70" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_71" sap:VirtualizedContainerService.HintSize="242,60">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">False</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_20">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">639,830</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">760,890 760,920 593.25,920 593.25,958.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_21">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">639,710</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">760,770 760,830</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_4" sap:VirtualizedContainerService.HintSize="134,129">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">473,605.5</av:Point>
+            <av:Size x:Key="ShapeSize">134,129</av:Size>
+            <av:PointCollection x:Key="TrueConnector">473,670 330,670 330,739</av:PointCollection>
+            <av:PointCollection x:Key="FalseConnector">607,670 760,670 760,710</av:PointCollection>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_35">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,549</av:Point>
+            <av:Size x:Key="ShapeSize">242,102</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">251,600 540,600 540,605.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_41">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,470</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,530 130,549</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_22">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">30,388</av:Point>
+            <av:Size x:Key="ShapeSize">200,64</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,452 130,470</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_36">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">9,310</av:Point>
+            <av:Size x:Key="ShapeSize">242,60</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">130,370 130,388</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Assign_67" sap:VirtualizedContainerService.HintSize="242,102">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_17">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">499,369</av:Point>
+            <av:Size x:Key="ShapeSize">242,102</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">620,471 620,501 1050,501 1050,1810 1020,1810</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowDecision_5" sap:VirtualizedContainerService.HintSize="160,114">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+            <av:Point x:Key="ShapeLocation">290,223</av:Point>
+            <av:Size x:Key="ShapeSize">160,114</av:Size>
+            <av:PointCollection x:Key="FalseConnector">450,280 480,280 480,420 499,420</av:PointCollection>
+            <av:PointCollection x:Key="TrueConnector">290,280 130,280 130,310</av:PointCollection>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_23">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">750,146</av:Point>
+            <av:Size x:Key="ShapeSize">200,108</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">750,200 410,200 410,223</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_16">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">750,79</av:Point>
+            <av:Size x:Key="ShapeSize">200,22</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">850,101 850,146</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_15">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">750,4</av:Point>
+            <av:Size x:Key="ShapeSize">200,51</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">850,55 850,79</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="FlowStep_7">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <av:Point x:Key="ShapeLocation">470,4</av:Point>
+            <av:Size x:Key="ShapeSize">200,183</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">670,95.5 700,95.5 700,29.5 750,29.5</av:PointCollection>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="Flowchart_1" sap:VirtualizedContainerService.HintSize="1104,2391">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:Boolean x:Key="IsExpanded">False</x:Boolean>
+            <av:Point x:Key="ShapeLocation">300,62.5</av:Point>
+            <av:Size x:Key="ShapeSize">60,75</av:Size>
+            <av:PointCollection x:Key="ConnectorLocation">360,100 390,100 390,95.5 470,95.5</av:PointCollection>
+            <x:Double x:Key="Height">2193</x:Double>
+            <x:Double x:Key="Width">1090</x:Double>
+            <x:Boolean x:Key="IsAnnotationDocked">True</x:Boolean>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </sap2010:ViewStateData>
+      <sap2010:ViewStateData Id="test_3_1" sap:VirtualizedContainerService.HintSize="1144,2471" />
+    </sap2010:ViewStateManager>
+  </sap2010:WorkflowViewState.ViewStateManager>
+</Activity>
